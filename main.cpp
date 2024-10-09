@@ -1,79 +1,81 @@
+/* 
+* main.cpp
+*
+* Created: 12.02.2023 22:37:38
+* Author: Thomas Heß
+*/
 
-#include "DigitalIn.h"
-#include "DigitalOut.h"
-#include "LinkedList.h"
-#include "PinNames.h"
-#include "PortNames.h"
-#include "PortOut.h"
-#include "ThisThread.h"
-#include "cmsis_armclang.h"
-#include "stm32l152xe.h"
-#include <cstdint>
+/* mbed Microcontroller Library
+ * Copyright (c) 2019 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
+ */
 #undef __ARM_FP
 
 #include "mbed.h"
+#include "Automat.hpp"
+#include "Hardware_Methoden.hpp"  // für Zugriff auf die Hardware (GPIO, UART, ADC, ...) z.B. für Polling
+#include "Variable_Global.hpp"  // Definition der globalen Variablen, die von anderen Funktionen in anderen cpp-files benötigt werden
+#include <cstdint>
+#include <cstdio>
 
-PortOut stepper(PortC, 0x000F);
 
-uint32_t vollschritt[] = {0b0110,0b0101,0b1001,0b1010};
 
-int aktZustand = 0;
+/************************************************************
+ * Angeschlossene Hardware:
+ *
+ * Tasten:      Rechtslauf   PB_4     extInt, steigende Flanke
+ *              Stopp:       PB_3     extInt, steigende Flanke
+                Linkslauf:   PB_0     extInt, steigende Flanke
+ *
+ *
+ *
+ * 
+ * Motor:       Anschluss A:    PC_3     
+ *              Anschluss A/:   PC_2     
+ *              Anschluss B:    PC_1
+ *              Anschluss B/:   PC_0
+ *
+ * Tasten am Dabble-Gamepad (Digital) mit zugehörigem 2Byte-Hex-Code
+ * Pfeil nach oben:     0x0001
+ * Pfeil nach unten     0x0002
+ * Pfeil nach links     0x0004
+ * Pfeil nach rechts    0x0008
+ * Start                0x0100
+ * Select               0x0200
+ * Dreieck              0x0400
+ * Kreis                0x0800
+ * Kreuz                0x1000
+ * Quadrat              0x2000
 
-void SchrittRechts()
-{
-    if (aktZustand == 4)
-    {
-        aktZustand = 0;
-    }
+ ************************************************************/
 
-    stepper.write(vollschritt[aktZustand]);
-    aktZustand = aktZustand + 1;
-}
+Automat derAutomat;  // Deklaration der globalen Variable derAutomat, die in Variable_Global.h extern definiert ist
+                            // nur in einem cpp-file deklarieren, in den anderen cpp-files nur per 
+                            // #include "Globals.hpp" verfügbar machen
+                            // Im Konstruktor von Automat wird init() aufgerufen um die FSM zu initialisieren
 
-void SchrittLinks()
-{
-    if (aktZustand < 0)
-    {
-        aktZustand--;
-    }
-    else if (aktZustand == 0) {
-        aktZustand = 3;
-    }
-    else
-    {
-        aktZustand --;
-    }
-    stepper.write(vollschritt[aktZustand]);
-}
-
-void isrTim6()
-{
-    TIM6->CR1 = 0;
-    TIM6->CNT = 0;
-    TIM6->SR  = 0;
-    SchrittLinks();
-    TIM6->CR1 = 1;
-}
-
-void init_Tim6()
-{
-    TIM6->SR  = 0;
-    RCC->APB1ENR  |= 0b10000;
-    TIM6->CR1 = 0;
-    TIM6->ARR = 250;
-    TIM6->PSC = 31999;
-    TIM6->CNT = 0;
-    NVIC_SetVector(TIM6_IRQn,(uint32_t) & isrTim6);
-    HAL_NVIC_EnableIRQ(TIM6_IRQn);
-    TIM6->DIER = 1; 
-    __enable_irq();
-    TIM6->CR1 = 1;
-}
 
 int main()
 {
-    // bool 
-    init_Tim6();
-    while (true) 
-    {}
+       
+	
+    
+
+	 // Globale Interruptfreigabe
+	 __enable_irq();
+
+
+    while (true) {
+
+            
+            
+
+    
+
+
+    derAutomat.process_StateChange();
+
+    } // of while(true)
+
+    return 1;
 }
